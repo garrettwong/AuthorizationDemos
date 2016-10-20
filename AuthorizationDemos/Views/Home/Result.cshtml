@@ -1,0 +1,94 @@
+﻿<div class="row" ng-app="app" ng-controller="emplcontroller">
+
+    <div class="col-md-12">
+        <h1>Employee Information</h1>
+
+        <h2>
+            <span>{{userName}}</span>
+            <input type="button" class="btn" value="logoff" ng-click="logout()" />
+        </h2>
+
+        <table class="table table-striped table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>EmpNo</th>
+                    <th>EmpName</th>
+                    <th>Salary</th>
+                    <th>DeptName</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="Emp in Employees">
+                    <td>
+                        <span>{{Emp.EmpNo}}</span>
+                    </td>
+                    <td>
+                        <span>{{Emp.EmpName}}</span>
+                    </td>
+                    <td>
+                        <span>{{Emp.Salary}}</span>
+                    </td>
+                    <td>
+                        <span>{{Emp.DeptName}}</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div><span>{{Message}}</span></div>
+    </div>
+
+</div>
+
+@section scripts {
+    <script src="~/Scripts/angular.js"></script>
+
+    <script>
+        var module = angular.module('app', []);
+
+        module.service('empService', function ($http) {
+            this.get = function () {
+         
+                var accesstoken = sessionStorage.getItem('accessToken');
+ 
+                var authHeaders = {};
+                if (accesstoken) {
+                    authHeaders.Authorization = 'Bearer ' + accesstoken;
+                }
+ 
+                var response = $http({
+                    url: "/api/EmployeeAPI",
+                    method: "GET",
+                    headers: authHeaders
+                });
+                return response;
+            };
+        });
+        module.controller('emplcontroller', function ($scope, empService) {
+            $scope.Employees = [];
+
+            $scope.Message = "";
+            $scope.userName = sessionStorage.getItem('userName');
+
+
+            loadEmployees();
+
+            function loadEmployees() {
+
+
+                var promise = empService.get();
+                promise.then(function (resp) {
+                    $scope.Employees = resp.data;
+                    $scope.Message = "Call Completed Successfully";
+                }, function (err) {
+                    $scope.Message = "Error!!! " + err.status
+                });
+            };
+            $scope.logout = function () {
+                sessionStorage.removeItem('accessToken');
+                
+                window.location.href = '/Home/Angular';
+            };
+        });
+    </script>
+}
+
