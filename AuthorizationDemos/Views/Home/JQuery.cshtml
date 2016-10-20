@@ -1,13 +1,103 @@
 ﻿<div class="row">
 
     <div class="col-md-12">
-        <h2>JQuery</h2>
-        <p>
-            ASP.NET Web API is a framework that makes it easy to build HTTP services that reach
-            a broad range of clients, including browsers and mobile devices. ASP.NET Web API
-            is an ideal platform for building RESTful applications on the .NET Framework.
-        </p>
+
+
+        <div class="col-md-12">
+            <h2>JQuery</h2>
+            <p>
+                <div>
+                    <label>Username</label>
+                    <input type="text" id="username" />
+                </div>
+                <div>
+                    <label>Password</label>
+                    <input type="text" id="password" />
+                </div>
+
+                <pre></pre>
+            </p>
+
+            <p>
+                <a class="btn btn-primary"
+                   id="btnRegister"
+                   href="#">Register</a>
+            </p>
+
+            <p>
+                <a class="btn btn-default"
+                   id="btnLogin"
+                   href="#">Login</a>
+            </p>
+        </div>
 
     </div>
 
 </div>
+
+@section scripts {
+    <script src="~/Scripts/jquery-3.1.1.js"></script>
+
+    <script>
+        (function ($) {
+
+            function LoginService() {
+                return {
+                    register: function (userInfo) {
+                        return $.ajax({
+                            url: "/api/Account/Register",
+                            method: "POST",
+                            data: userInfo,
+                        });
+                    },
+                    login: function (username, password) {
+                        return $.post({
+                            url: "/TOKEN",
+                            data: $.param({
+                                grant_type: 'password',
+                                username: username,
+                                password: password
+                            }),
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        });
+                    }
+                }
+            }
+
+            function ViewBinder(loginService) {
+                var $username = $('#username');
+                var $password = $('#password');
+
+                var login = function () {
+                    //This is the information to pass for token based authentication
+                    var userLogin = {
+                        grant_type: 'password',
+                        username: $username.val(),
+                        password: $password.val()
+                    };
+
+                    var promiselogin = loginService.login(userLogin);
+
+                    promiselogin.then(function (resp) {
+                        var username = resp.data.userName;
+                        //Store the token information in the SessionStorage
+                        //So that it can be accessed for other views
+                        sessionStorage.setItem('userName', resp.data.userName);
+                        sessionStorage.setItem('accessToken', resp.data.access_token);
+                        sessionStorage.setItem('refreshToken', resp.data.refresh_token);
+                        window.location.href = '/Home/Result';
+                    }, function (err) {
+                        alert(err);
+                    });
+                };
+
+                $('#btnLogin').click(login);
+            }
+
+            var view = new ViewBinder(
+                new LoginService()
+            );
+
+        })(jQuery);
+    </script>
+}
